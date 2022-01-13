@@ -1,0 +1,305 @@
+server {
+    listen ${NGINX_PORT} default_server;
+    server_name ${NGINX_HOST};
+
+    charset utf-8;
+
+    root /app;
+    index index.php;
+
+    client_max_body_size 64m;
+    client_body_buffer_size 100k;
+    large_client_header_buffers 4 81920;
+
+    proxy_connect_timeout       60s;
+    proxy_send_timeout          60s;
+    proxy_read_timeout          60s;
+    send_timeout                60s;
+    fastcgi_connect_timeout     60s;
+    fastcgi_send_timeout        60s;
+    fastcgi_read_timeout        60s;
+
+    autoindex off;
+    gzip on;
+    gzip_proxied any;
+
+    # Trailing slash
+    rewrite ^([^.]*[^/])$ $1/ permanent;
+
+    location / {
+        try_files $uri $uri/ @bitrix;
+    }
+
+    error_page  404 /app/404.php;
+    location = /404.php {
+        root /app;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass    app:9000;
+        fastcgi_index   index.php;
+        include fastcgi_params;
+        fastcgi_param   DOCUMENT_ROOT     $document_root;
+        fastcgi_param   SCRIPT_FILENAME   $document_root$fastcgi_script_name;
+        fastcgi_param   PATH_INFO         $fastcgi_path_info;
+        fastcgi_param   QUERY_STRING      $args;
+        fastcgi_param   CONTENT_TYPE      $content_type;
+        fastcgi_param   CONTENT_LENGTH    $content_length;
+        fastcgi_param   SERVER_NAME       $server_name;
+        fastcgi_param   REQUEST_URI       $request_uri;
+        fastcgi_param   DOCUMENT_URI      $document_uri;
+        fastcgi_param   REQUEST_METHOD    $request_method;
+        fastcgi_param   REMOTE_ADDR       $remote_addr;
+        fastcgi_param   REMOTE_USER       $remote_user;
+        fastcgi_intercept_errors        on;
+        fastcgi_ignore_client_abort     off;
+        fastcgi_buffer_size             128k;
+        fastcgi_buffers                 4 256k;
+        fastcgi_busy_buffers_size       256k;
+        fastcgi_temp_file_write_size    256k;
+        error_page  404 /app/404.php;
+    }
+
+    location @bitrix {
+        fastcgi_pass app:9000;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root/bitrix/urlrewrite.php;
+    }
+
+    location ~* ^.+\.(jpg|jpeg|gif|png|svg|js|css|mp3|ogg|mpe?g|avi|zip|gz|bz2?|rar|swf|ogv|ico|ttf)$ {
+        access_log off;
+        expires max;
+    }
+
+    location ~ (/\.ht|/bitrix/modules|/upload/support/not_image) {
+        deny all;
+    }
+
+    location ~ /.git/ {
+        deny all;
+    }
+
+    error_page 500 /500.html;
+    location = /500.html {
+        root /app;
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+
+    # Sitemap redirect
+    location = /sitemap.xml {
+      rewrite ^(.*)$ /sitemaps/$host/sitemap.xml break;
+    }
+
+    # Requested redirects
+    location /gruming/ {
+      rewrite ^(.*)$ /uslugi/gruming/ redirect;
+    }
+
+    location /contacts/ozerki/ {
+      rewrite ^(.*)$ /contacts/ redirect;
+    }
+
+    location /contacts/vsevolozhsk/ {
+      rewrite ^(.*)$ /contacts/ redirect;
+    }
+
+    location /kompyuternaya-tomografiya/ {
+      rewrite ^(.*)$ /uslugi/kompyuternaya-tomografiya/ redirect;
+    }
+
+    location /lechenie-gryzunov/ {
+      rewrite ^(.*)$ /uslugi/lechenie-gryzunov/ redirect;
+    }
+
+    location /otdelenie-dermatologii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-dermatologii/ redirect;
+    }
+
+    location /otdelenie-diagnostiki/endoskopiya/ {
+      rewrite ^(.*)$ /uslugi/endoskopiya-i-endokhirurgiya/ redirect;
+    }
+
+    location /otdelenie-hirurgii/endohirurgiya/laparoskopicheskaya-sterilizaciya/ {
+      rewrite ^(.*)$ /uslugi/endoskopiya-i-endokhirurgiya/laparoskopicheskaya-sterilizaciya redirect;
+    }
+
+    location /otdelenie-diagnostiki/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-diagnostiki/ redirect;
+    }
+
+    location /otdelenie-diagnostiki/laboratoriya/ {
+      rewrite ^(.*)$ /uslugi/laboratoriya/ redirect;
+    }
+
+    location /otdelenie-diagnostiki/laboratoriya/analiz-kala/ {
+      rewrite ^(.*)$ /uslugi/laboratoriya/analiz-kala redirect;
+    }
+
+    location /otdelenie-diagnostiki/laboratoriya/analiz-krovi/ {
+      rewrite ^(.*)$ /uslugi/laboratoriya/analiz-krovi redirect;
+    }
+
+    location /otdelenie-diagnostiki/laboratoriya/analiz-mochi/ {
+      rewrite ^(.*)$ /uslugi/laboratoriya/analiz-mochi redirect;
+    }
+
+    location /otdelenie-diagnostiki/rentgen/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-diagnostiki/rentgen redirect;
+    }
+
+    location /otdelenie-diagnostiki/uzi/ {
+      rewrite ^(.*)$ /uslugi/uzi/ redirect;
+    }
+
+    location /otdelenie-diagnostiki/uzi/serdca/ {
+      rewrite ^(.*)$ /uslugi/uzi/serdca redirect;
+    }
+
+    location /otdelenie-diagnostiki/uzi/glaza/ {
+      rewrite ^(.*)$ /uslugi/uzi/glaza redirect;
+    }
+
+    location /otdelenie-diagnostiki/uzi/brushnoy-polosti/ {
+      rewrite ^(.*)$ /uslugi/uzi/brushnoy-polosti redirect;
+    }
+
+    location /otdelenie-hirurgii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/ redirect;
+    }
+
+    location /otdelenie-hirurgii/abdominalnaya-hirurgiya/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/abdominalnaya-hirurgiya redirect;
+    }
+
+    location /otdelenie-hirurgii/abdominalnaya-hirurgiya/kastraciya-kota/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/abdominalnaya-hirurgiya/kastraciya-kota redirect;
+    }
+
+    location /otdelenie-hirurgii/abdominalnaya-hirurgiya/kastraciya-sobak/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/abdominalnaya-hirurgiya/kastraciya-sobak redirect;
+    }
+
+    location /otdelenie-hirurgii/abdominalnaya-hirurgiya/kesarevo-sechenie-u-koshki/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/abdominalnaya-hirurgiya/kesarevo-sechenie-u-koshki redirect;
+    }
+
+    location /otdelenie-hirurgii/abdominalnaya-hirurgiya/kesarevo-sechenie-u-sobak/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/abdominalnaya-hirurgiya/kesarevo-sechenie-u-sobak redirect;
+    }
+
+    location /otdelenie-hirurgii/abdominalnaya-hirurgiya/sterilizatsiya-koshek/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/abdominalnaya-hirurgiya/sterilizatsiya-koshek redirect;
+    }
+
+    location /otdelenie-hirurgii/abdominalnaya-hirurgiya/sterilizatsiya-sobak/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/abdominalnaya-hirurgiya/sterilizatsiya-sobak redirect;
+    }
+
+    location /otdelenie-hirurgii/torakalnaya-hirurgiya/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/torakalnaya-hirurgiya redirect;
+    }
+
+    location /otdelenie-hirurgii/hirurgiya-myagkih-tkanej/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-hirurgii/hirurgiya-myagkih-tkanej redirect;
+    }
+
+    location /otdelenie-hirurgii/endohirurgiya/ {
+      rewrite ^(.*)$ /uslugi/endoskopiya-i-endokhirurgiya/ redirect;
+    }
+
+    location /otdelenie-kardiologii/lechenie-gkmp-koshek/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-kardiologii/lechenie-gkmp-koshek redirect;
+    }
+
+    location /otdelenie-stomatologii/chistka-zubov/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-stomatologii/chistka-zubov redirect;
+    }
+
+    location /otdelenie-stomatologii/udalenie-zubov-u-koshek/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-stomatologii/udalenie-zubov-u-koshek redirect;
+    }
+
+    location /otdelenie-stomatologii/udalenie-zubov-u-sobak/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-stomatologii/udalenie-zubov-u-sobak redirect;
+    }
+
+    location /otdelenie-terapii/chipirovanie/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-terapii/chipirovanie redirect;
+    }
+
+    location /otdelenie-terapii/vaktsinatsiya/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-terapii/vaktsinatsiya redirect;
+    }
+
+    location /otdelenie-terapii/vaktsinatsiya/koshek/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-terapii/vaktsinatsiya/koshek redirect;
+    }
+
+    location /otdelenie-terapii/vaktsinatsiya/sobak/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-terapii/vaktsinatsiya/sobak redirect;
+    }
+
+    location /vetapteka-i-zoomagazin/ {
+      rewrite ^(.*)$ /uslugi/vetapteka-i-zoomagazin/ redirect;
+    }
+
+    location /otdelenie-terapii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-terapii/ redirect;
+    }
+
+    location /uslugi/otdelenie-diagnostiki/laboratoriya/ {
+      rewrite ^(.*)$ /uslugi/laboratoriya/ redirect;
+    }
+
+    location /uslugi/otdelenie-diagnostiki/endoskopiya/ {
+      rewrite ^(.*)$ /uslugi/endoskopiya-i-endokhirurgiya/ redirect;
+    }
+
+    location /stati/gazovyi-narkoz/ {
+      rewrite ^(.*)$ /stati/gazovyy-narkoz-tak-li-on-universalen-/ redirect;
+    }
+
+    location /statsionar-dlya-zhivotnyh/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-reanimatsii-i-intensivnoj-terapii/ redirect;
+    }
+
+    location /uslugi/otdelenie-diagnostiki/uzi/ {
+      rewrite ^(.*)$ /uslugi/uzi/ redirect;
+    }
+
+    location /uslugi/otdelenie-diagnostiki/uzi/serdca/ {
+      rewrite ^(.*)$ /uslugi/uzi/serdca redirect;
+    }
+
+    location /uslugi/otdelenie-diagnostiki/laboratoriya/analiz-kala/ {
+      rewrite ^(.*)$ /uslugi/laboratoriya/analiz-kala redirect;
+    }
+
+    location /uslugi/otdelenie-hirurgii/endohirurgiya/laparoskopicheskaya-sterilizaciya/ {
+      rewrite ^(.*)$ /uslugi/endoskopiya-i-endokhirurgiya/laparoskopicheskaya-sterilizaciya/ redirect;
+    }
+
+    location /otdelenie-kardiologii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-kardiologii/ redirect;
+    }
+
+    location /otdelenie-nevrologii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-nevrologii/ redirect;
+    }
+
+    location /otdelenie-stomatologii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-stomatologii/ redirect;
+    }
+
+    location /otdelenie-oftalmologii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-oftalmologii/ redirect;
+    }
+
+    location /otdelenie-ortopedii-i-travmatologii/ {
+      rewrite ^(.*)$ /uslugi/otdelenie-ortopedii-i-travmatologii/ redirect;
+    }
+}

@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      target: develop
+      args:
+        XDEBUG_REMOTE_HOST: ${XDEBUG_REMOTE_HOST:-127.0.0.1}
+        MSMTPC_CONFIG: |
+          account default
+          protocol ${MAIL_PROTOCOL:-smtp}
+          host ${MAIL_HOST_NAME:-mailhog}
+          port ${MAIL_HOST_PORT:-1025}
+          from ${MAIL_FROM:-from@mail.com}
+          auth ${MAIL_AUTH:-off}
+          user ${MAIL_USERNAME:-username}
+          password ${MAIL_PASSWORD:-password}
+          keepbcc ${MAIL_KEEPBCC:-off}
+          tls ${MAIL_TLS:-off}
+          tls_certcheck ${MAIL_CERTCHECK:-off}
+    volumes:
+      - ./app:/app
+
+  nginx:
+    build:
+      target: develop
+    command: [nginx-debug, '-g', 'daemon off;']
+    volumes:
+      - ./app:/app:ro
+    ports:
+      - "80:80"
+    environment:
+      - NGINX_HOST=dev.peskot.ru
+      - NGINX_PORT=80
+
+  mysql:
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+
+  mailhog:
+    image: mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mysql
+    ports:
+      - "82:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=${DATABASE_USER}
+      - PMA_PASSWORD=${DATABASE_PASSWORD}

@@ -1,0 +1,85 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: app
+      dockerfile: docker/php-fpm/Dockerfile
+      args:
+        PHP_BASEIMAGE_VERSION: ${PHP_BASEIMAGE_VERSION:-8.0}
+        PHP_COMPOSER_VERSION: ${PHP_COMPOSER_VERSION}
+        USER_ID: ${USER_ID}
+        GROUP_ID: ${GROUP_ID}
+        BUILDKIT_INLINE_CACHE: 1
+        TZ: ${TZ:-Europe/Moscow}
+    depends_on:
+      - mysql
+      - memcached
+    environment:
+      APP_ENV: ${APP_ENV}
+
+  nginx:
+    build:
+      context: app
+      dockerfile: docker/nginx/Dockerfile
+      args:
+        NGINX_BASEIMAGE_VERSION: ${NGINX_BASEIMAGE_VERSION:-1.21}
+        NODE_BASEIMAGE_VERSION: ${NODE_BASEIMAGE_VERSION:-14.10}
+        BUILDKIT_INLINE_CACHE: 1
+    healthcheck:
+      test: "wget --spider 127.0.0.1:80"
+      interval: 30s
+      timeout: 20s
+      retries: 5
+    stop_grace_period: 30s
+    stop_signal: SIGQUIT
+    depends_on:
+      - app
+
+  jobber:
+    build:
+      context: app
+      dockerfile: docker/jobber/Dockerfile
+    environment:
+      TZ: ${TZ:-Europe/Moscow}
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:v8.0.21
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=\"$${MYSQL_PASSWORD}\" $${DATABASE_NAME} --execute \"SHOW DATABASES;\""
+      interval: 30s
+      timeout: 20s
+      retries: 5
+    stop_grace_period: 1m
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+    security_opt:
+      - seccomp:unconfined
+    command: [
+      '--sql-mode=',
+      '--character-set-server=utf8',
+      '--collation-server=utf8_unicode_ci',
+      '--max_binlog_size=500M',
+      '--expire_logs_days=3',
+      '--innodb_flush_method=O_DIRECT',
+      '--innodb_file_per_table=1',
+      '--innodb_flush_log_at_trx_commit=2',
+      '--innodb_buffer_pool_size=144M',
+      '--transaction-isolation=READ-COMMITTED',
+      '--binlog_cache_size=0',
+      '--sync_binlog=0',
+      '--default-time-zone=+03:00'
+    ]
+
+  memcached:
+    image: memcached:latest
+    healthcheck:
+      test: "echo stats | nc 127.0.0.1 11211"
+      interval: 30s
+      timeout: 20s
+      retries: 5
