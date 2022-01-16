@@ -39,7 +39,7 @@ services:
       - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
 
   mailhog:
-    image: mailhog:latest
+    image: mailhog/mailhog
     restart: unless-stopped
     ports:
       - "1025:1025"
