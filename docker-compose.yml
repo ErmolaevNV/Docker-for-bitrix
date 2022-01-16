@@ -46,7 +46,7 @@ services:
       - app
 
   mysql:
-    image: mysql:v8.0.21
+    image: mysql:8.0.21
     healthcheck:
       test: "/usr/bin/mysql --user=root --password=\"$${MYSQL_PASSWORD}\" $${DATABASE_NAME} --execute \"SHOW DATABASES;\""
       interval: 30s
